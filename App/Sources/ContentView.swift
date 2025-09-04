@@ -2,6 +2,24 @@ import SwiftUI
 import UIKit
 import JavaScriptCore
 
+// Browser Configuration
+struct BrowserConfig {
+    // STEP 1: Get your FREE API key from: https://apiflash.com
+    // STEP 2: Replace YOUR_API_KEY_HERE with your actual key
+    static let apiflashKey = "YOUR_API_KEY_HERE"
+    
+    static var isConfigured: Bool {
+        return apiflashKey != "YOUR_API_KEY_HERE"
+    }
+    
+    static func getScreenshotURL(for url: URL) -> String? {
+        if !isConfigured {
+            return nil
+        }
+        return "https://api.apiflash.com/v1/urltoimage?access_key=\(apiflashKey)&url=\(url.absoluteString)&format=png&width=390&height=844&fresh=true&full_page=false&wait_until=page_loaded"
+    }
+}
+
 // Remote Renderer - Uses real Chrome on server
 class RemoteRenderer: UIView {
     private let scrollView = UIScrollView()
