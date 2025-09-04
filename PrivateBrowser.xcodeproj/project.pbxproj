@@ -16,6 +16,7 @@
         1A2B3C592B123456001234B /* CookieManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C582B123456001234B /* CookieManager.swift */; };
         1A2B3C5B2B123456001234C /* ChromiumWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C5A2B123456001234C /* ChromiumWrapper.mm */; };
         1A2B3C5F2B123456001234E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1A2B3C5E2B123456001234E /* Assets.xcassets */; };
+        1A2B3C612B123456001234F /* BasicHTMLRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A2B3C632B1234560012351 /* BasicHTMLRenderer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
         1A2B3C5E2B123456001234E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
         1A2B3C602B123456001234F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
         1A2B3C622B1234560012350 /* PrivateBrowser-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PrivateBrowser-Bridging-Header.h"; sourceTree = "<group>"; };
+        1A2B3C632B1234560012351 /* BasicHTMLRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasicHTMLRenderer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
                 1A2B3C542B1234560012349 /* ChromiumEngineBridge.swift */,
                 1A2B3C562B123456001234A /* HistoryManager.swift */,
                 1A2B3C582B123456001234B /* CookieManager.swift */,
+                1A2B3C632B1234560012351 /* BasicHTMLRenderer.swift */,
             );
             path = Sources;
             sourceTree = "<group>";
@@ -188,6 +191,7 @@
                 1A2B3C572B123456001234A /* HistoryManager.swift in Sources */,
                 1A2B3C592B123456001234B /* CookieManager.swift in Sources */,
                 1A2B3C5B2B123456001234C /* ChromiumWrapper.mm in Sources */,
+                1A2B3C612B123456001234F /* BasicHTMLRenderer.swift in Sources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };

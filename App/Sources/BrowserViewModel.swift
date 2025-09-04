@@ -13,6 +13,8 @@ class BrowserViewModel: ObservableObject {
     @Published var tabCount: Int = 1
     @Published var pageTitle: String = ""
     
+    var navigationHandler: ((NavigationAction) -> Void)?
+    
     private var engineBridge: ChromiumEngineBridge
     private var historyManager: HistoryManager
     private var cookieManager: CookieManager
@@ -175,4 +177,12 @@ struct BrowserTab {
     var title: String?
     var favicon: Data?
     var lastVisited: Date = Date()
+}
+
+enum NavigationAction {
+    case back
+    case forward
+    case reload
+    case stopLoading
+    case navigate(String)
 }
