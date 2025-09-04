@@ -2,13 +2,7 @@
 #include <memory>
 #include <string>
 #include <functional>
-
-// Forward declarations for Chromium CEF types
-namespace CefSharp {
-    class ChromiumWebBrowser;
-    class CefSettings;
-    class BrowserSettings;
-}
+#include <vector>
 
 // Callback types
 typedef void (*LoadingCallback)(bool);
@@ -19,10 +13,97 @@ typedef void (*NavigationCallback)(bool, bool);
 typedef void (*RenderCallback)(const void*, int, int);
 typedef void (*JSResultCallback)(const char*);
 
+// Stub browser implementation for development
+// This will be replaced with actual Chromium integration
+class StubBrowserEngine {
+private:
+    // State
+    bool isLoading = false;
+    std::string currentURL;
+    std::string currentTitle;
+    bool canGoBack = false;
+    bool canGoForward = false;
+    std::vector<std::string> history;
+    int historyIndex = -1;
+    
+public:
+    StubBrowserEngine() {
+        currentTitle = "Private Browser";
+        currentURL = "about:blank";
+    }
+    
+    void loadURL(const std::string& url) {
+        currentURL = url;
+        isLoading = true;
+        
+        // Add to history
+        if (historyIndex >= 0 && historyIndex < history.size() - 1) {
+            // Remove forward history when navigating to new page
+            history.erase(history.begin() + historyIndex + 1, history.end());
+        }
+        history.push_back(url);
+        historyIndex = history.size() - 1;
+        
+        // Update navigation state
+        canGoBack = historyIndex > 0;
+        canGoForward = false;
+        
+        // Extract title from URL (simplified)
+        size_t domainStart = url.find("://");
+        if (domainStart != std::string::npos) {
+            domainStart += 3;
+            size_t domainEnd = url.find('/', domainStart);
+            if (domainEnd == std::string::npos) {
+                domainEnd = url.length();
+            }
+            currentTitle = url.substr(domainStart, domainEnd - domainStart);
+        } else {
+            currentTitle = url;
+        }
+        
+        // Simulate loading completion
+        isLoading = false;
+    }
+    
+    void goBack() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            currentURL = history[historyIndex];
+            canGoBack = historyIndex > 0;
+            canGoForward = true;
+        }
+    }
+    
+    void goForward() {
+        if (historyIndex < history.size() - 1) {
+            historyIndex++;
+            currentURL = history[historyIndex];
+            canGoBack = true;
+            canGoForward = historyIndex < history.size() - 1;
+        }
+    }
+    
+    void reload() {
+        isLoading = true;
+        // Simulate reload
+        isLoading = false;
+    }
+    
+    void stopLoading() {
+        isLoading = false;
+    }
+    
+    bool getIsLoading() const { return isLoading; }
+    std::string getCurrentURL() const { return currentURL; }
+    std::string getCurrentTitle() const { return currentTitle; }
+    bool getCanGoBack() const { return canGoBack; }
+    bool getCanGoForward() const { return canGoForward; }
+};
+
 // Engine wrapper class
 class ChromiumEngineImpl {
 private:
-    std::unique_ptr<CefSharp::ChromiumWebBrowser> browser;
+    std::unique_ptr<StubBrowserEngine> browser;
     
     // Callbacks
     LoadingCallback loadingCallback = nullptr;
@@ -32,100 +113,118 @@ private:
     NavigationCallback navigationCallback = nullptr;
     RenderCallback renderCallback = nullptr;
     
-    // State
-    bool isLoading = false;
-    std::string currentURL;
-    std::string currentTitle;
-    bool canGoBack = false;
-    bool canGoForward = false;
-    
 public:
     ChromiumEngineImpl() {
-        initializeCEF();
+        initializeBrowser();
     }
     
     ~ChromiumEngineImpl() {
-        shutdownCEF();
+        shutdownBrowser();
     }
     
-    void initializeCEF() {
-        // Initialize Chromium Embedded Framework
-        // This would include setting up CEF settings, handlers, etc.
-        
-        // Example initialization (simplified):
-        /*
-        CefSettings settings;
-        settings.multi_threaded_message_loop = false;
-        settings.no_sandbox = true;
-        
-        CefInitialize(settings, nullptr, nullptr, nullptr);
-        
-        CefBrowserSettings browserSettings;
-        browser = std::make_unique<CefSharp::ChromiumWebBrowser>();
-        
-        // Set up handlers for navigation, loading, rendering, etc.
-        */
+    void initializeBrowser() {
+        browser = std::make_unique<StubBrowserEngine>();
     }
     
-    void shutdownCEF() {
-        // Clean up CEF resources
-        /*
-        if (browser) {
-            browser->CloseBrowser(true);
-            browser.reset();
-        }
-        CefShutdown();
-        */
+    void shutdownBrowser() {
+        browser.reset();
     }
     
     void loadURL(const std::string& url) {
-        currentURL = url;
-        // browser->LoadURL(url);
+        if (!browser) return;
         
-        // Simulate loading callbacks
+        browser->loadURL(url);
+        
+        // Notify callbacks
         if (loadingCallback) {
-            loadingCallback(true);
+            loadingCallback(browser->getIsLoading());
         }
         if (urlCallback) {
-            urlCallback(url.c_str());
+            urlCallback(browser->getCurrentURL().c_str());
+        }
+        if (titleCallback) {
+            titleCallback(browser->getCurrentTitle().c_str());
+        }
+        if (navigationCallback) {
+            navigationCallback(browser->getCanGoBack(), browser->getCanGoForward());
+        }
+        if (progressCallback) {
+            progressCallback(browser->getIsLoading() ? 0.5f : 1.0f);
         }
     }
     
     void goBack() {
-        // browser->GoBack();
+        if (!browser) return;
+        
+        browser->goBack();
+        
+        if (urlCallback) {
+            urlCallback(browser->getCurrentURL().c_str());
+        }
+        if (navigationCallback) {
+            navigationCallback(browser->getCanGoBack(), browser->getCanGoForward());
+        }
     }
     
     void goForward() {
-        // browser->GoForward();
+        if (!browser) return;
+        
+        browser->goForward();
+        
+        if (urlCallback) {
+            urlCallback(browser->getCurrentURL().c_str());
+        }
+        if (navigationCallback) {
+            navigationCallback(browser->getCanGoBack(), browser->getCanGoForward());
+        }
     }
     
     void reload() {
-        // browser->Reload();
+        if (!browser) return;
+        
+        browser->reload();
+        
+        if (loadingCallback) {
+            loadingCallback(true);
+        }
+        if (progressCallback) {
+            progressCallback(0.0f);
+        }
+        
+        // Simulate loading completion
+        if (loadingCallback) {
+            loadingCallback(false);
+        }
+        if (progressCallback) {
+            progressCallback(1.0f);
+        }
     }
     
     void stopLoading() {
-        // browser->StopLoad();
-        isLoading = false;
+        if (!browser) return;
+        
+        browser->stopLoading();
+        
         if (loadingCallback) {
             loadingCallback(false);
         }
     }
     
     void executeJavaScript(const std::string& script, JSResultCallback callback) {
-        // browser->ExecuteJavaScript(script, callback);
-        // For now, just return empty result
+        // Stub implementation - return empty result
         if (callback) {
-            callback("");
+            callback("{}");
         }
     }
     
     void sendTouchEvent(int type, float x, float y) {
-        // Convert touch events to CEF mouse events
-        // browser->SendMouseClickEvent(x, y, ...);
+        // Stub implementation for touch events
+        // In real implementation, this would convert to browser input events
     }
     
     void setViewportSize(int width, int height) {
-        // browser->SetSize(width, height);
+        // Stub implementation for viewport sizing
+        // In real implementation, this would resize the rendering surface
     }
     
     // Setter methods for callbacks
