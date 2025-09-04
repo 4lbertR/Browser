@@ -34,32 +34,37 @@ class ChromiumEngineBridge {
         // This would call into the C++ Chromium wrapper
         engineHandle = chromium_engine_create()
         
+        guard let handle = engineHandle else {
+            print("Failed to create Chromium engine")
+            return
+        }
+        
         // Set up callbacks from engine to Swift
-        chromium_engine_set_loading_callback(engineHandle) { [weak self] isLoading in
+        chromium_engine_set_loading_callback(handle) { [weak self] isLoading in
             self?.onLoadingStateChanged?(isLoading)
         }
         
-        chromium_engine_set_progress_callback(engineHandle) { [weak self] progress in
+        chromium_engine_set_progress_callback(handle) { [weak self] progress in
             self?.onProgressChanged?(Double(progress))
         }
         
-        chromium_engine_set_url_callback(engineHandle) { [weak self] urlPtr in
+        chromium_engine_set_url_callback(handle) { [weak self] urlPtr in
             guard let urlPtr = urlPtr else { return }
             let url = String(cString: urlPtr)
             self?.onURLChanged?(url)
         }
         
-        chromium_engine_set_title_callback(engineHandle) { [weak self] titlePtr in
+        chromium_engine_set_title_callback(handle) { [weak self] titlePtr in
             guard let titlePtr = titlePtr else { return }
             let title = String(cString: titlePtr)
             self?.onTitleChanged?(title)
         }
         
-        chromium_engine_set_navigation_callback(engineHandle) { [weak self] canGoBack, canGoForward in
+        chromium_engine_set_navigation_callback(handle) { [weak self] canGoBack, canGoForward in
             self?.onNavigationStateChanged?(canGoBack, canGoForward)
         }
         
-        chromium_engine_set_render_callback(engineHandle) { [weak self] pixelData, width, height in
+        chromium_engine_set_render_callback(handle) { [weak self] pixelData, width, height in
             guard let pixelData = pixelData else { return }
             self?.onRenderFrame?(pixelData, Int(width), Int(height))
         }
