@@ -45,16 +45,27 @@ class RemoteRenderer: UIView {
     func loadURL(_ url: URL) {
         currentURL = url
         
-        // For immediate testing, use a free screenshot API
-        // Sign up for free at: https://apiflash.com or https://screenshotmachine.com
-        let screenshotURL = "https://api.apiflash.com/v1/urltoimage?access_key=YOUR_FREE_KEY&url=\(url.absoluteString)&format=png&width=390&height=844&fresh=true"
-        
-        // Fallback: Just display the URL text for now
-        if screenshotURL.contains("YOUR_FREE_KEY") {
+        // Check if API is configured
+        if !BrowserConfig.isConfigured {
             displayPlaceholder(for: url)
-        } else {
-            fetchScreenshot(from: screenshotURL)
+            return
         }
+        
+        // Get screenshot URL from config
+        guard let screenshotURL = BrowserConfig.getScreenshotURL(for: url) else {
+            displayPlaceholder(for: url)
+            return
+        }
+        
+        // For WebSocket connections, handle differently
+        if screenshotURL.starts(with: "wss://") || screenshotURL.starts(with: "ws://") {
+            // Would connect to WebSocket server here
+            displayPlaceholder(for: url)
+            return
+        }
+        
+        // Fetch screenshot from API
+        fetchScreenshot(from: screenshotURL)
     }
     
     private func fetchScreenshot(from urlString: String) {
@@ -77,26 +88,34 @@ class RemoteRenderer: UIView {
     }
     
     private func displayPlaceholder(for url: URL?) {
+        // Clear previous subviews
+        scrollView.subviews.forEach { $0.removeFromSuperview() }
+        imageView.image = nil
+        
         // Create a placeholder view with instructions
         let label = UILabel()
         label.numberOfLines = 0
         label.textAlignment = .center
+        label.font = UIFont.systemFont(ofSize: 16)
+        
         label.text = """
-        To see real website rendering:
+        ⚠️ API Key Not Configured
         
-        1. Sign up for FREE at:
-        apiflash.com (100 screenshots/month)
+        To render websites, please:
         
-        2. Get your API key
+        1. Go to: apiflash.com
+        2. Sign up FREE (takes 30 seconds)
+        3. Get your API key
+        4. Open Config.swift
+        5. Replace YOUR_API_KEY_HERE with your key
+        6. Rebuild the app
         
-        3. Update RemoteRenderer.swift
-        with your key
+        Free tier includes:
+        • 100 screenshots/month
+        • Full JavaScript rendering
+        • Perfect CSS support
         
-        Or deploy the included server/
-        to Replit for unlimited rendering
-        
-        Current URL:
-        \(url?.absoluteString ?? "none")
+        Current URL: \(url?.host ?? "none")
         """
         
         label.translatesAutoresizingMaskIntoConstraints = false
