@@ -4,9 +4,8 @@ import JavaScriptCore
 
 // Browser Configuration
 struct BrowserConfig {
-    // STEP 1: Get your FREE API key from: https://apiflash.com
-    // STEP 2: Replace YOUR_API_KEY_HERE with your actual key
-    static let apiflashKey = "YOUR_API_KEY_HERE"
+    // API key configured and ready to use!
+    static let apiflashKey = "a4949a0cd7334343b994e736dbe06544"
     
     static var isConfigured: Bool {
         return apiflashKey != "YOUR_API_KEY_HERE"

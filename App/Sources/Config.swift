@@ -7,8 +7,8 @@ struct BrowserConfig {
     // - https://screenshotmachine.com (100 free/month)
     // - https://screenshotapi.net (100 free/month)
     
-    // STEP 2: Replace with your actual API key
-    static let apiflashKey = "YOUR_API_KEY_HERE"
+    // API key configured and ready!
+    static let apiflashKey = "a4949a0cd7334343b994e736dbe06544"
     
     // Alternative: Use Screenshot Machine (also free)
     static let screenshotMachineKey = "YOUR_KEY_HERE"
