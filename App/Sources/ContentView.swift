@@ -101,7 +101,8 @@ struct ContentView: View {
             }
             
             // Web Content View
-            ChromiumWebView(viewModel: browserViewModel)
+            // TODO: Replace with ChromiumWebView when engine is ready
+            BasicHTMLView(viewModel: browserViewModel)
                 .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
             
             // Bottom Tab Bar (optional)
