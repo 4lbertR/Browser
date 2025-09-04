@@ -28,7 +28,7 @@
         1A2B3C542B1234560012349 /* ChromiumEngineBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromiumEngineBridge.swift; sourceTree = "<group>"; };
         1A2B3C562B123456001234A /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
         1A2B3C582B123456001234B /* CookieManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CookieManager.swift; sourceTree = "<group>"; };
-        1A2B3C5A2B123456001234C /* ChromiumWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ChromiumWrapper.mm; sourceTree = "<group>"; };
+        1A2B3C5A2B123456001234C /* ChromiumWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = src/ChromiumWrapper.mm; sourceTree = "<group>"; };
         1A2B3C5C2B123456001234D /* ChromiumEngine.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ChromiumEngine.framework; sourceTree = "<group>"; };
         1A2B3C5E2B123456001234E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
         1A2B3C602B123456001234F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
