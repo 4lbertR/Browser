@@ -137,7 +137,8 @@ class EnhancedWebRenderer: UIView {
             let pattern = "<h\(level)[^>]*>(.*?)</h\(level)>"
             let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive)
             regex?.enumerateMatches(in: cleanHTML, range: NSRange(cleanHTML.startIndex..., in: cleanHTML)) { match, _, _ in
-                if let range = Range(match?.range(at: 1), in: cleanHTML) {
+                guard let match = match else { return }
+                if let range = Range(match.range(at: 1), in: cleanHTML) {
                     let text = String(cleanHTML[range])
                         .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
                         .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -159,7 +160,8 @@ class EnhancedWebRenderer: UIView {
         let pPattern = "<p[^>]*>(.*?)</p>"
         let pRegex = try? NSRegularExpression(pattern: pPattern, options: [.caseInsensitive, .dotMatchesLineSeparators])
         pRegex?.enumerateMatches(in: cleanHTML, range: NSRange(cleanHTML.startIndex..., in: cleanHTML)) { match, _, _ in
-            if let range = Range(match?.range(at: 1), in: cleanHTML) {
+            guard let match = match else { return }
+            if let range = Range(match.range(at: 1), in: cleanHTML) {
                 let text = String(cleanHTML[range])
                     .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
                     .replacingOccurrences(of: "&nbsp;", with: " ")
@@ -184,7 +186,8 @@ class EnhancedWebRenderer: UIView {
         let divPattern = "<div[^>]*>(.*?)</div>"
         let divRegex = try? NSRegularExpression(pattern: divPattern, options: [.caseInsensitive, .dotMatchesLineSeparators])
         divRegex?.enumerateMatches(in: cleanHTML, range: NSRange(cleanHTML.startIndex..., in: cleanHTML)) { match, _, _ in
-            if let range = Range(match?.range(at: 1), in: cleanHTML) {
+            guard let match = match else { return }
+            if let range = Range(match.range(at: 1), in: cleanHTML) {
                 let text = String(cleanHTML[range])
                     .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
                     .replacingOccurrences(of: "&[^;]+;", with: " ", options: .regularExpression)
@@ -206,8 +209,9 @@ class EnhancedWebRenderer: UIView {
         let linkPattern = "<a[^>]*href=[\"']([^\"']*)[\"'][^>]*>(.*?)</a>"
         let linkRegex = try? NSRegularExpression(pattern: linkPattern, options: .caseInsensitive)
         linkRegex?.enumerateMatches(in: cleanHTML, range: NSRange(cleanHTML.startIndex..., in: cleanHTML)) { match, _, _ in
-            if let hrefRange = Range(match?.range(at: 1), in: cleanHTML),
-               let textRange = Range(match?.range(at: 2), in: cleanHTML) {
+            guard let match = match else { return }
+            if let hrefRange = Range(match.range(at: 1), in: cleanHTML),
+               let textRange = Range(match.range(at: 2), in: cleanHTML) {
                 let href = String(cleanHTML[hrefRange])
                 let linkText = String(cleanHTML[textRange])
                     .replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
