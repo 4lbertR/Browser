@@ -2,6 +2,125 @@ import SwiftUI
 import UIKit
 import JavaScriptCore
 
+// Remote Renderer - Uses real Chrome on server
+class RemoteRenderer: UIView {
+    private let scrollView = UIScrollView()
+    private let imageView = UIImageView()
+    private var currentURL: URL?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupView()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupView()
+    }
+    
+    private func setupView() {
+        backgroundColor = .white
+        
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.contentMode = .scaleAspectFit
+        
+        addSubview(scrollView)
+        scrollView.addSubview(imageView)
+        
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            
+            imageView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            imageView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+    }
+    
+    func loadURL(_ url: URL) {
+        currentURL = url
+        
+        // For immediate testing, use a free screenshot API
+        // Sign up for free at: https://apiflash.com or https://screenshotmachine.com
+        let screenshotURL = "https://api.apiflash.com/v1/urltoimage?access_key=YOUR_FREE_KEY&url=\(url.absoluteString)&format=png&width=390&height=844&fresh=true"
+        
+        // Fallback: Just display the URL text for now
+        if screenshotURL.contains("YOUR_FREE_KEY") {
+            displayPlaceholder(for: url)
+        } else {
+            fetchScreenshot(from: screenshotURL)
+        }
+    }
+    
+    private func fetchScreenshot(from urlString: String) {
+        guard let url = URL(string: urlString) else { return }
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            guard let data = data,
+                  let image = UIImage(data: data) else { 
+                DispatchQueue.main.async {
+                    self?.displayPlaceholder(for: self?.currentURL)
+                }
+                return 
+            }
+            
+            DispatchQueue.main.async {
+                self?.imageView.image = image
+                self?.updateScrollViewContentSize()
+            }
+        }.resume()
+    }
+    
+    private func displayPlaceholder(for url: URL?) {
+        // Create a placeholder view with instructions
+        let label = UILabel()
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.text = """
+        To see real website rendering:
+        
+        1. Sign up for FREE at:
+        apiflash.com (100 screenshots/month)
+        
+        2. Get your API key
+        
+        3. Update RemoteRenderer.swift
+        with your key
+        
+        Or deploy the included server/
+        to Replit for unlimited rendering
+        
+        Current URL:
+        \(url?.absoluteString ?? "none")
+        """
+        
+        label.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(label)
+        
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor),
+            label.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 20),
+            label.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -20)
+        ])
+    }
+    
+    private func updateScrollViewContentSize() {
+        guard let image = imageView.image else { return }
+        let imageSize = image.size
+        let scale = bounds.width / imageSize.width
+        let scaledHeight = imageSize.height * scale
+        
+        imageView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: scaledHeight)
+        scrollView.contentSize = CGSize(width: bounds.width, height: scaledHeight)
+    }
+}
+
 // Using NSAttributedString HTML renderer - NOT WebKit based
 class EnhancedWebRenderer: UIView, UITextViewDelegate {
     private let scrollView = UIScrollView()
@@ -424,26 +543,12 @@ struct WebRenderingView: UIViewRepresentable {
             
             viewModel.isLoading = true
             
-            // Use enhanced renderer to load the URL
+            // Use RemoteRenderer to load the URL
             renderer.loadURL(url)
             
-            // Extract title from HTML (for now, simplified)
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                if let data = data, let html = String(data: data, encoding: .utf8) {
-                    if let titleRange = html.range(of: "<title>", options: .caseInsensitive),
-                       let titleEndRange = html.range(of: "</title>", options: .caseInsensitive) {
-                        let title = String(html[titleRange.upperBound..<titleEndRange.lowerBound])
-                        DispatchQueue.main.async {
-                            viewModel.pageTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                            viewModel.isLoading = false
-                        }
-                    } else {
-                        DispatchQueue.main.async {
-                            viewModel.isLoading = false
-                        }
-                    }
-                }
-            }.resume()
+            // Update page title
+            viewModel.pageTitle = url.host ?? "Loading..."
+            viewModel.isLoading = false
         }
         
         
