@@ -2,8 +2,8 @@ import SwiftUI
 import UIKit
 import JavaScriptCore
 
-// Enhanced Web Renderer class embedded directly
-class EnhancedWebRenderer: UIView {
+// Using NSAttributedString HTML renderer - NOT WebKit based
+class EnhancedWebRenderer: UIView, UITextViewDelegate {
     private let scrollView = UIScrollView()
     private var contentView = UIView()
     private var jsContext: JSContext?
@@ -95,10 +95,12 @@ class EnhancedWebRenderer: UIView {
     func loadURL(_ url: URL) {
         currentURL = url
         
+        // Clear previous content
         contentView.subviews.forEach { $0.removeFromSuperview() }
         documentElements.removeAll()
         cssStyles.removeAll()
         
+        // Fetch the HTML
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self,
                   let data = data,
@@ -107,9 +109,94 @@ class EnhancedWebRenderer: UIView {
             }
             
             DispatchQueue.main.async {
-                self.renderBasicHTML(html)
+                // Use NSAttributedString HTML rendering (NOT WebKit)
+                self.renderWithNSAttributedString(html)
             }
         }.resume()
+    }
+    
+    private func renderWithNSAttributedString(_ html: String) {
+        // Clean the HTML first
+        var cleanHTML = html
+        
+        // Remove scripts since they won't execute
+        cleanHTML = cleanHTML.replacingOccurrences(
+            of: "<script[^>]*>.*?</script>",
+            with: "",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        
+        // Add viewport for mobile
+        if !cleanHTML.contains("viewport") {
+            cleanHTML = cleanHTML.replacingOccurrences(
+                of: "<head>",
+                with: "<head><meta name='viewport' content='width=device-width, initial-scale=1.0'>",
+                options: .caseInsensitive
+            )
+        }
+        
+        // Create NSAttributedString from HTML
+        guard let data = cleanHTML.data(using: .utf8) else { return }
+        
+        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+            .documentType: NSAttributedString.DocumentType.html,
+            .characterEncoding: String.Encoding.utf8.rawValue
+        ]
+        
+        // Process in background to avoid blocking UI
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            if let attributedString = try? NSAttributedString(
+                data: data,
+                options: options,
+                documentAttributes: nil
+            ) {
+                DispatchQueue.main.async {
+                    self?.displayAttributedContent(attributedString)
+                }
+            } else {
+                // Fallback to basic rendering
+                DispatchQueue.main.async {
+                    self?.renderBasicHTML(html)
+                }
+            }
+        }
+    }
+    
+    private func displayAttributedContent(_ attributedString: NSAttributedString) {
+        // Clear existing content
+        contentView.subviews.forEach { $0.removeFromSuperview() }
+        
+        // Create a UITextView to display the attributed string
+        let textView = UITextView()
+        textView.isEditable = false
+        textView.isScrollEnabled = false // We use our own scroll view
+        textView.attributedText = attributedString
+        textView.backgroundColor = .white
+        textView.dataDetectorTypes = [.link, .phoneNumber]
+        textView.linkTextAttributes = [
+            .foregroundColor: UIColor.systemBlue,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ]
+        
+        // Handle link taps
+        textView.isUserInteractionEnabled = true
+        textView.delegate = self
+        
+        // Add to content view
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(textView)
+        
+        NSLayoutConstraint.activate([
+            textView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            textView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 10),
+            textView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -10),
+            textView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10)
+        ])
+        
+        // Update content size
+        let size = textView.sizeThatFits(CGSize(width: bounds.width - 20, height: CGFloat.greatestFiniteMagnitude))
+        contentView.frame = CGRect(x: 0, y: 0, width: bounds.width, height: size.height + 20)
+        scrollView.contentSize = CGSize(width: bounds.width, height: size.height + 20)
     }
     
     private func renderBasicHTML(_ html: String) {
@@ -273,6 +360,16 @@ class EnhancedWebRenderer: UIView {
                 userInfo: ["url": href]
             )
         }
+    }
+    
+    // UITextViewDelegate for handling links in NSAttributedString
+    func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+        NotificationCenter.default.post(
+            name: NSNotification.Name("NavigateToURL"),
+            object: nil,
+            userInfo: ["url": URL.absoluteString]
+        )
+        return false // We handle the navigation ourselves
     }
 }
 
