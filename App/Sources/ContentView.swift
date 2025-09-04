@@ -147,7 +147,8 @@ struct ContentView: View {
             }
             
             // Web Content View - Using custom rendering engine
-            CustomWebView(viewModel: browserViewModel)
+            // This bypasses WebKit and Screen Time restrictions
+            WebRenderingView(viewModel: browserViewModel)
                 .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
             
             // Bottom Tab Bar (optional)
