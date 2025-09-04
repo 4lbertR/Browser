@@ -4,7 +4,8 @@
       "Bash(mkdir:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(git ls-tree:*)"
+      "Bash(git ls-tree:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
