@@ -378,7 +378,8 @@ struct WebRenderingView: UIViewRepresentable {
     @ObservedObject var viewModel: BrowserViewModel
     
     class WebContentView: UIView {
-        private let renderer = EnhancedWebRenderer()
+        // Use RemoteRenderer for full browser capabilities
+        private let renderer = RemoteRenderer()
         private var currentURL: String = ""
         
         override init(frame: CGRect) {
