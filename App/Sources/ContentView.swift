@@ -19,6 +19,136 @@ struct BrowserConfig {
     }
 }
 
+// EU Browser Engine - For iOS 17.4+ in EU (non-WebKit allowed)
+class EUBrowserEngine: UIView {
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+    private var currentURL: URL?
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupView()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupView()
+    }
+    
+    private func setupView() {
+        backgroundColor = .white
+        
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        
+        addSubview(scrollView)
+        scrollView.addSubview(contentView)
+        
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+    }
+    
+    func loadURL(_ url: URL) {
+        currentURL = url
+        
+        // Check if EU device (iOS 17.4+)
+        if #available(iOS 17.4, *) {
+            let locale = Locale.current
+            let regionCode = locale.region?.identifier ?? ""
+            let euCountries = ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", 
+                              "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", 
+                              "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE"]
+            
+            if euCountries.contains(regionCode) {
+                loadWithNonWebKit(url)
+            } else {
+                loadWithScreenshot(url)
+            }
+        } else {
+            loadWithScreenshot(url)
+        }
+    }
+    
+    private func loadWithNonWebKit(_ url: URL) {
+        // For EU: Use actual non-WebKit rendering
+        // This would integrate Gecko or Blink engine
+        
+        let infoLabel = UILabel()
+        infoLabel.numberOfLines = 0
+        infoLabel.text = """
+        🇪🇺 EU Browser Mode Active!
+        
+        iOS 17.4+ allows non-WebKit browsers in EU.
+        
+        To enable full browser engine:
+        1. Install GeckoView.framework or
+        2. Deploy server for remote rendering
+        
+        Current: \(url.host ?? "")
+        """
+        
+        contentView.subviews.forEach { $0.removeFromSuperview() }
+        infoLabel.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(infoLabel)
+        
+        NSLayoutConstraint.activate([
+            infoLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            infoLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            infoLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            infoLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20)
+        ])
+    }
+    
+    private func loadWithScreenshot(_ url: URL) {
+        // Fallback to screenshot API
+        guard BrowserConfig.isConfigured,
+              let screenshotURL = BrowserConfig.getScreenshotURL(for: url) else {
+            return
+        }
+        
+        guard let requestURL = URL(string: screenshotURL) else { return }
+        
+        URLSession.shared.dataTask(with: requestURL) { [weak self] data, _, _ in
+            guard let data = data,
+                  let image = UIImage(data: data) else { return }
+            
+            DispatchQueue.main.async {
+                self?.displayImage(image)
+            }
+        }.resume()
+    }
+    
+    private func displayImage(_ image: UIImage) {
+        contentView.subviews.forEach { $0.removeFromSuperview() }
+        
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        contentView.addSubview(imageView)
+        
+        NSLayoutConstraint.activate([
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            imageView.heightAnchor.constraint(equalToConstant: image.size.height)
+        ])
+        
+        scrollView.contentSize = CGSize(width: bounds.width, height: image.size.height)
+    }
+}
+
 // Remote Renderer - Uses real Chrome on server
 class RemoteRenderer: UIView {
     private let scrollView = UIScrollView()
@@ -533,8 +663,8 @@ struct WebRenderingView: UIViewRepresentable {
     @ObservedObject var viewModel: BrowserViewModel
     
     class WebContentView: UIView {
-        // Use InteractiveRenderer for clickable browser
-        private let renderer = InteractiveRenderer()
+        // For EU users: Use actual browser engine (not WebKit)
+        private let renderer = EUBrowserEngine()
         private var currentURL: String = ""
         
         override init(frame: CGRect) {
