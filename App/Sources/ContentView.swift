@@ -146,9 +146,8 @@ struct ContentView: View {
                     .frame(height: 2)
             }
             
-            // Web Content View
-            // TODO: Replace with ChromiumWebView when engine is ready
-            BasicHTMLView(viewModel: browserViewModel)
+            // Web Content View - Using custom rendering engine
+            CustomWebView(viewModel: browserViewModel)
                 .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
             
             // Bottom Tab Bar (optional)
