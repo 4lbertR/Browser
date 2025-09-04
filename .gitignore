@@ -120,11 +120,15 @@ Temporary Items
 Engine/chromium_src/
 Engine/depot_tools/
 Engine/build/ios_arm64/
+Engine/build/*
+!Engine/build/.gitkeep
 Engine/*.a
 Engine/*.dylib
-Engine/*.framework/
-!Engine/ChromiumEngine.framework/Info.plist
-!Engine/ChromiumEngine.framework/Modules/
+
+# Don't ignore the stub framework for now
+# Engine/*.framework/
+# !Engine/ChromiumEngine.framework/Info.plist
+# !Engine/ChromiumEngine.framework/Modules/
 
 # Private keys and certificates
 *.p12
