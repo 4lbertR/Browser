@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UIKit
 
@@ -157,10 +158,14 @@ extension BasicHTMLRenderer: UITextViewDelegate {
 }
 
 // SwiftUI wrapper
-struct BasicHTMLView: UIViewRepresentable {
-    @ObservedObject var viewModel: BrowserViewModel
+public struct BasicHTMLView: UIViewRepresentable {
+    @ObservedObject public var viewModel: BrowserViewModel
     
-    func makeUIView(context: Context) -> BasicHTMLRenderer {
+    public init(viewModel: BrowserViewModel) {
+        self.viewModel = viewModel
+    }
+    
+    public func makeUIView(context: Context) -> BasicHTMLRenderer {
         let renderer = BasicHTMLRenderer()
         renderer.onLinkTapped = { url in
             viewModel.navigate(to: url)
@@ -168,7 +173,7 @@ struct BasicHTMLView: UIViewRepresentable {
         return renderer
     }
     
-    func updateUIView(_ uiView: BasicHTMLRenderer, context: Context) {
+    public func updateUIView(_ uiView: BasicHTMLRenderer, context: Context) {
         if !viewModel.currentURL.isEmpty {
             uiView.loadURL(viewModel.currentURL)
         }

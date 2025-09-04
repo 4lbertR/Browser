@@ -102,8 +102,14 @@ struct ContentView: View {
             
             // Web Content View
             // TODO: Replace with ChromiumWebView when engine is ready
-            BasicHTMLView(viewModel: browserViewModel)
-                .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
+            if #available(iOS 14.0, *) {
+                BasicHTMLView(viewModel: browserViewModel)
+                    .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
+            } else {
+                Text("Loading web content...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
+            }
             
             // Bottom Tab Bar (optional)
             HStack {
