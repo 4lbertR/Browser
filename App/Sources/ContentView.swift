@@ -1,4 +1,50 @@
 import SwiftUI
+import UIKit
+
+// Temporary: BasicHTMLView defined here until build issue is resolved
+struct BasicHTMLView: UIViewRepresentable {
+    @ObservedObject var viewModel: BrowserViewModel
+    
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.isEditable = false
+        textView.isSelectable = true
+        textView.font = UIFont.systemFont(ofSize: 14)
+        return textView
+    }
+    
+    func updateUIView(_ textView: UITextView, context: Context) {
+        if !viewModel.currentURL.isEmpty {
+            textView.text = "Loading: \(viewModel.currentURL)\n\nNote: This is a placeholder.\nThe actual web rendering engine is being integrated."
+            
+            // Fetch and display basic content
+            if let url = URL(string: viewModel.currentURL) {
+                URLSession.shared.dataTask(with: url) { data, response, error in
+                    DispatchQueue.main.async {
+                        if let data = data, let html = String(data: data, encoding: .utf8) {
+                            // Extract title if possible
+                            if let titleRange = html.range(of: "<title>"),
+                               let titleEndRange = html.range(of: "</title>", range: titleRange.upperBound..<html.endIndex) {
+                                let title = String(html[titleRange.upperBound..<titleEndRange.lowerBound])
+                                viewModel.pageTitle = title
+                            }
+                            
+                            // Show basic text content
+                            let strippedHTML = html
+                                .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
+                                .replacingOccurrences(of: "&[^;]+;", with: " ", options: .regularExpression)
+                                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                            
+                            textView.text = "URL: \(viewModel.currentURL)\n\nContent:\n\(String(strippedHTML.prefix(2000)))"
+                        } else if let error = error {
+                            textView.text = "Error loading \(viewModel.currentURL):\n\(error.localizedDescription)"
+                        }
+                    }
+                }.resume()
+            }
+        }
+    }
+}
 
 struct ContentView: View {
     @StateObject private var browserViewModel = BrowserViewModel()
@@ -102,14 +148,8 @@ struct ContentView: View {
             
             // Web Content View
             // TODO: Replace with ChromiumWebView when engine is ready
-            if #available(iOS 14.0, *) {
-                BasicHTMLView(viewModel: browserViewModel)
-                    .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
-            } else {
-                Text("Loading web content...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
-            }
+            BasicHTMLView(viewModel: browserViewModel)
+                .background(browserViewModel.isPrivateMode ? Color.black : Color.white)
             
             // Bottom Tab Bar (optional)
             HStack {
